@@ -28,5 +28,7 @@
         "typedoc": "^0.15.0",
         "typescript": "^3.6.4"
     },
-    "dependencies": {}
+    "dependencies": {
+        "fts-functor": "^1.0.0"
+    }
 }
