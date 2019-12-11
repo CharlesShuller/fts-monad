@@ -18,79 +18,101 @@
 */
 
 import * as Monad from "../Monad";
-import * as Functor from "../Functor";
+import * as Functor from "fts-functor";
 
-class StringMonad implements Monad.Monad<string> {
-    constructor(readonly value: string){}
+class TestMonad<V> implements Monad.Monad<V> {
+    constructor(readonly value: V){}
 
-    bind<Vo>(bindFunction: (value: string) => Monad.Monad<Vo>): Monad.Monad<Vo> {
+    bind<Vo>(bindFunction: Monad.BindFunction<V, Vo>): Monad.Monad<Vo> {
 	return bindFunction(this.value);
     }
 
-    seq<Vo>(sequenceFunction: () => Monad.Monad<Vo>): Monad.Monad<Vo> {
+    seq<Vo>(sequenceFunction: Monad.SequenceFunction<Vo>): Monad.Monad<Vo> {
 	return sequenceFunction();
     }
 
-    then<Vo>(bindOrSequenceFunction: Monad.BindFunction<string, Vo> | Monad.SequenceFunction<Vo>): Monad.Monad<Vo> {
+    then<Vo>(bindOrSequenceFunction: Monad.BindFunction<V, Vo> | Monad.SequenceFunction<Vo>): Monad.Monad<Vo> {
 	return Monad.defaultThen(this.value, bindOrSequenceFunction)
     }
 
-    fmap<Vo>(fmapFunction: (originalValue: Functor.FmapFunction<string, Vo>)): Monad.Monad<Vo>
+    fmap<Vo>(fmapFunction: Functor.FmapFunction<V, Vo>): TestMonad<Vo>{
+        return new TestMonad( fmapFunction(this.value) );
+    }
 }
 
 
-class NumberMonad implements Monad.Monad<number> {
-    constructor(readonly numericValue: number){}
+class TestMonad2<V> implements Monad.Monad<V> {
+    constructor(readonly value: V){}
 
-    bind<Vo>(bindFunction: (value: number) => Monad.Monad<Vo>): Monad.Monad<Vo> {
-	return bindFunction(this.numericValue);
+    bind<Vo>(bindFunction: Monad.BindFunction<V, Vo>): Monad.Monad<Vo> {
+	return bindFunction(this.value);
     }
 
-    seq<Vo>(sequenceFunction: () => Monad.Monad<Vo>): Monad.Monad<Vo> {
+    seq<Vo>(sequenceFunction: Monad.SequenceFunction<Vo>): Monad.Monad<Vo> {
 	return sequenceFunction();
     }
 
-    then<Vo>(bindOrSequenceFunction: Monad.BindFunction<number, Vo> | Monad.SequenceFunction<Vo>): Monad.Monad<Vo> {
-	return Monad.defaultThen(this.numericValue, bindOrSequenceFunction)
-    }    
-}
+    then<Vo>(bindOrSequenceFunction: Monad.BindFunction<V, Vo> | Monad.SequenceFunction<Vo>): Monad.Monad<Vo> {
+	return Monad.defaultThen(this.value, bindOrSequenceFunction)
+    }
 
+    fmap<Vo>(fmapFunction: Functor.FmapFunction<V, Vo>): TestMonad<Vo>{
+        return new TestMonad( fmapFunction(this.value) );
+    }
+}
 
 
 
 test("Can be implemented", () => {
-    const sm: StringMonad = new StringMonad("Hello");
+    const tm = new TestMonad<string>("Hello");
 
-    expect(sm.value).toBe("Hello");
+    expect(tm.value).toBe("Hello");
 });
 
 
-test("Then works with a bind function", () => {
-    const sm: StringMonad = new StringMonad("Hello")
-	.then( (value: string) => new StringMonad(value + " World") ) as StringMonad;
+test("'then' works with a bind function", () => {
+    const tm = new TestMonad("Hello")
+	.then( (value: string) => new TestMonad<string>(value + " World") ) as TestMonad<string>;
 
-    expect(sm.value).toBe("Hello World");
+    expect(tm.value).toBe("Hello World");
 });
 
-test("Then works with a sequence function", () => {
-    const sm: StringMonad = new StringMonad("Hello")
-	.then( () => new StringMonad("Other Value") ) as StringMonad;
+test("bind works", () => {
+    const tm = new TestMonad("Hello")
+	.bind( (value: string) => new TestMonad<string>(value + " World") ) as TestMonad<string>;
 
-    expect(sm.value ).toBe("Other Value");
-});
-
-
-test("Then can call a bind function which returns a different kind of monad", () => {
-    const m: NumberMonad = new StringMonad("Hello")
-	.then( (value: string) => new NumberMonad(value.length) ) as NumberMonad;
-
-    expect( (m as NumberMonad).numericValue ).toBe(5);
+    expect(tm.value).toBe("Hello World");
 });
 
 
-test("Then can call a sequence function which returns a different kind of monad", () => {
-    const m: NumberMonad = new StringMonad("Hello")
-	.then( () => new NumberMonad(8) ) as NumberMonad
 
-    expect( (m as NumberMonad).numericValue ).toBe(8);
+test("'then' works with a sequence function", () => {
+    const tm = new TestMonad<string>("Hello")
+	.then( () => new TestMonad<string>("Other Value") ) as TestMonad<string>;
+
+    expect(tm.value ).toBe("Other Value");
+});
+
+
+test("seq works", () => {
+    const tm = new TestMonad<string>("Hello")
+	.seq( () => new TestMonad<string>("Other Value") ) as TestMonad<string>;
+
+    expect(tm.value ).toBe("Other Value");
+});
+
+
+test("'then' can produce a different kind of monad", () => {
+    const tm = new TestMonad("Hello")
+	.then( (value: string) => new TestMonad2<string>(value + " World") ) as TestMonad2<string>;
+
+    expect(tm.value).toBe("Hello World");
+});
+
+
+test("It can fmap a value", () => {
+    const tm = new TestMonad<string>("12")
+	.fmap( (value: string) => Number.parseInt(value) );
+
+    expect(tm.value).toBe(12);
 });

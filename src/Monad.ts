@@ -20,7 +20,7 @@
  *
  */
 
-import * as Functor from './Functor';
+import * as Functor from 'fts-functor';
 
 
 /**
@@ -61,7 +61,7 @@ export interface SequenceFunction<Vo> {
  * used to map functions into other functions.  For general use in
  * programming though, it's best to think of them as a collection of
  * functions.
- * 
+ *
  * For more through information on Monads, the reader is encouraged to
  * google search "Haskell Monad Introduction".
  *
@@ -70,10 +70,15 @@ export interface SequenceFunction<Vo> {
 export interface Monad<V> extends Functor.Functor<V> {
     bind<Vo>(bindFunction: BindFunction<V, Vo>): Monad<Vo>;
     seq<Vo>(sequenceFunction: SequenceFunction<Vo>): Monad<Vo>;
-    
+
     then<Vo>(bindOrSequenceFunction: BindFunction<V, Vo> | SequenceFunction<Vo>): Monad<Vo>;
 }
 
+
+
+/**
+ * This implements the default "then" function.
+ */
 export function defaultThen<Vi, Vo>(value: Vi, bindOrSequenceFunction: BindFunction<Vi, Vo> | SequenceFunction<Vo>): Monad<Vo> {
     if(bindOrSequenceFunction.length === 0){
 	return (bindOrSequenceFunction as SequenceFunction<Vo>)();
@@ -81,5 +86,3 @@ export function defaultThen<Vi, Vo>(value: Vi, bindOrSequenceFunction: BindFunct
 	return (bindOrSequenceFunction as BindFunction<Vi, Vo>)(value);
     }
 }
-
-
