@@ -1,4 +1,4 @@
-Functor
+Monad
 ===============================================================================
 
 Mathmatically, Monads are sed to map functions into other functions.  For
