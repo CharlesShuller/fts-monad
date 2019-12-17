@@ -1,9 +1,9 @@
 {
     "name": "fts-monad",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "description": "Monad interface for functional constructs in typescript",
     "main": "lib/Monad.js",
-    "types": "lib/Maybe.d.ts",
+    "types": "lib/Monad.d.ts",
     "repository": {
         "type": "git",
         "url": ""
